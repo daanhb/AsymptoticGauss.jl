@@ -42,7 +42,7 @@ function asy_gaussfreud(n::Integer, alpha = 0.0, m = 1, qm = 1.0; reduced = fals
     softEdge = (n*2/m/qm/A[m+1] )^(1/m)
     # Use finite differences for derivative of polynomial when not x^alpha*exp(-x) and use other initial approximations
     useFinDiff = (m != 1) || (qm != 1.0)
-    bes = besselroots(alpha, n_pre).^2 # [Tricomi 1947 pg. 296]
+    bes = approx_besselroots(alpha, n_pre).^2 # [Tricomi 1947 pg. 296]
     w = zeros(ELT, n_alloc)
 
     # Find initial values for x

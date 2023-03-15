@@ -5,7 +5,7 @@ using SpecialFunctions
 using Roots
 using LinearAlgebra
 
-import FastGaussQuadrature: besselroots
+import FastGaussQuadrature: approx_besselroots
 
 include("asy_laguerre.jl")
 

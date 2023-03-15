@@ -1,8 +1,8 @@
-# In Julia, do: include("onTheFlyGH.jl"); compare();
+
 using FastGaussQuadrature
 using Printf
 
-function compare()
+function compare_gauss_hermite()
 
 	m = 6
 	exa = sqrt(pi)/1^((m+1)/2)*prod((2:2:m).-1)/2^(m/2) # equals \int_{-\infty}^\infty p^m exp(-[k=1]*p^2) dp for even m

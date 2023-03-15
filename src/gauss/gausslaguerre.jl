@@ -46,7 +46,7 @@ function gausslaguerre_asy(n::Integer, alpha;
 
     # The Bessel region
     # First compute the roots of the Bessel function of order alpha
-    jak_vector = besselroots(alpha, k_bessel)
+    jak_vector = approx_besselroots(alpha, k_bessel)
 
     bessel_wins = true
     k = 0
@@ -285,33 +285,6 @@ gl_airy_x3(ak, d) = ak^2*(d*16)^(1/3)/5 + (11/35-12/175*ak^3)*d + (16/1575*ak+92
 gl_airy_x5(ak, d) = -(15152/3031875*ak^5+1088/121275*ak^2)*2^(1/3)*d^(7/3)
 
 
-# Sum the first Q elements of vals, and return the absolute value of the next
-# value in the list (or of the last value in the list)
-function sum_explicit(vals, Q)
-    T = eltype(vals[1])
-    z = zero(T)
-    for q = min(Q,length(vals)):-1:1
-        z += vals[q]
-    end
-    if Q < length(vals)
-        delta = abs(vals[Q+1])
-    else
-        delta = abs(vals[end])
-    end
-    z, delta
-end
-
-function sum_adaptive(vals)
-    z = vals[1]
-    i = 1
-    while (i < length(vals)) && (abs(vals[i+1]) < abs(vals[i]))
-        i += 1
-        z += vals[i]
-    end
-    delta = abs(vals[min(i+1,length(vals))])
-    z, delta
-end
-
 function gl_bulk_solve_t(n, k, d)
     T = typeof(d)
     pt = (4n-4k+3)*d
@@ -347,8 +320,8 @@ function gausslaguerre_asy_bulk(n, alpha, k, d, T)
     xs = (x3, x5, x7, x9)
     ws = (w3, w5, w7)
 
-    xk, xdelta = (T > 0) ? sum_explicit(xs, (T-1)>>1) : sum_adaptive(xs)
-    wk, wdelta = (T > 0) ? sum_explicit(ws, (T-1)>>1) : sum_adaptive(ws)
+    xk, xdelta = (T > 0) ? sum_fixed_terms(xs, (T-1)>>1) : sum_decreasing_terms(xs)
+    wk, wdelta = (T > 0) ? sum_fixed_terms(ws, (T-1)>>1) : sum_decreasing_terms(ws)
 
     xk += t/d
 
@@ -373,8 +346,8 @@ function gausslaguerre_asy0_bulk(n, k, d, T)
     xs = (x3, x5, x7, x9)
     ws = (w3, w5, w7)
 
-    xk, xdelta = (T > 0) ? sum_explicit(xs, (T-1)>>1) : sum_adaptive(xs)
-    wk, wdelta = (T > 0) ? sum_explicit(ws, (T-1)>>1) : sum_adaptive(ws)
+    xk, xdelta = (T > 0) ? sum_fixed_terms(xs, (T-1)>>1) : sum_decreasing_terms(xs)
+    wk, wdelta = (T > 0) ? sum_fixed_terms(ws, (T-1)>>1) : sum_decreasing_terms(ws)
 
     xk += t/d
 
@@ -402,8 +375,8 @@ function gausslaguerre_asy_bessel(n, alpha, jak, d, T)
     xs = (x3, x5, x7, x9)
     ws = (w3, w5, w7, w9)
 
-    xk, xdelta = (T > 0) ? sum_explicit(xs, (T-1)>>1) : sum_adaptive(xs)
-    wk, wdelta = (T > 0) ? sum_explicit(ws, (T-1)>>1) : sum_adaptive(ws)
+    xk, xdelta = (T > 0) ? sum_fixed_terms(xs, (T-1)>>1) : sum_decreasing_terms(xs)
+    wk, wdelta = (T > 0) ? sum_fixed_terms(ws, (T-1)>>1) : sum_decreasing_terms(ws)
 
     xfactor = jak^2 * d
     xk = xfactor * (1 + xk)
@@ -433,8 +406,8 @@ function gausslaguerre_asy0_bessel(n, jak, d, T)
     xs = (x3, x5, x7, x9, x11)
     ws = (w3, w5, w7, w9, w11)
 
-    xk, xdelta = (T > 0) ? sum_explicit(xs, (T-1)>>1) : sum_adaptive(xs)
-    wk, wdelta = (T > 0) ? sum_explicit(ws, (T-1)>>1) : sum_adaptive(ws)
+    xk, xdelta = (T > 0) ? sum_fixed_terms(xs, (T-1)>>1) : sum_decreasing_terms(xs)
+    wk, wdelta = (T > 0) ? sum_fixed_terms(ws, (T-1)>>1) : sum_decreasing_terms(ws)
 
     xfactor = jak^2 * d
     xk = xfactor * (1 + xk)
@@ -470,7 +443,7 @@ function gausslaguerre_asy_airy(n, alpha, k, d, T)
 
     xs = (x1, x3, x5)
 
-    xk, xdelta = (T > 0) ? sum_explicit(xs, (T+1)>>1) : sum_adaptive(xs)
+    xk, xdelta = (T > 0) ? sum_fixed_terms(xs, (T+1)>>1) : sum_decreasing_terms(xs)
 
     wk = 4^(1/3)*xk^(alpha+1/3)*exp(-xk)/(airyaiprime(ak))^2
     wdelta = abs(wk)
@@ -487,7 +460,7 @@ function gausslaguerre_asy0_airy(n, k, d, T)
 
     xs = (x1, x3, x5)
 
-    xk, xdelta = (T > 0) ? sum_explicit(xs, (T+1)>>1) : sum_adaptive(xs)
+    xk, xdelta = (T > 0) ? sum_fixed_terms(xs, (T+1)>>1) : sum_decreasing_terms(xs)
 
     wk = 4^(1/3) * xk^(1/3) * exp(-xk) / (airyaiprime(ak))^2
     wdelta = abs(wk)
@@ -559,7 +532,7 @@ function gausslaguerre_rec(n, alpha; reduced = false)
     n_pre = min(n, 7)
 
     nu = 4n + 2alpha + 2
-    x_pre = T.(besselroots(alpha, n_pre)).^2 / nu # this is a lower bound by [DLMF 18.16.10]
+    x_pre = T.(approx_besselroots(alpha, n_pre)).^2 / nu # this is a lower bound by [DLMF 18.16.10]
 
     noUnderflow = true      # this flag turns false once the weights start to underflow
     for k in 1:n

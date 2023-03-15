@@ -5,8 +5,12 @@ using FastGaussQuadrature
 
 include("onTheFlyGH.jl")
 
-@testset "Gauss-Hermite on the fly" begin
-    compare()
+@testset "Gauss-Hermite" begin
+    compare_gauss_hermite()
 end
 
-include("GaussLaguerrePlots.jl")
+include("gausslaguerreTest.jl")
+
+@testset "Gauss-Laguerre" begin
+    include("GaussLaguerrePlots.jl")
+end

@@ -68,7 +68,7 @@ function laguerreRec( n::Int, compRepr::Bool, alpha::Float64)
         mn = n
     end
     itric = min(mn, 7)
-    bes = besselroots(alpha, itric).^2/(4*n + 2*alpha+2) # [DLMF 18.16.10] says this is lower than the zero, so we do not risk skipping a zero (if none of the results coincide)
+    bes = approx_besselroots(alpha, itric).^2/(4*n + 2*alpha+2) # [DLMF 18.16.10] says this is lower than the zero, so we do not risk skipping a zero (if none of the results coincide)
 
     factorw = (n^2 +alpha*n)^(-1/2) # Ratio of leading order coefficients
     w = zeros(mn)
@@ -323,7 +323,7 @@ function asyRHgen(n, compRepr, alpha, m, qm)
     softEdge = (n*2/m/qm/A[m+1] )^(1/m)
     # Use finite differences for derivative of polynomial when not x^alpha*exp(-x) and use other initial approximations
     useFinDiff = (m != 1) || (qm != 1.0)
-    bes = besselroots(alpha, itric).^2 # [Tricomi 1947 pg. 296]
+    bes = approx_besselroots(alpha, itric).^2 # [Tricomi 1947 pg. 296]
     w = zeros(mn)
     if useFinDiff
         x = [bes*(2*m-1)^2/16/m^2/n^2*softEdge ; zeros(mn-itric) ]
@@ -780,7 +780,7 @@ function laguerreExp( n::Int, compRepr::Bool, alpha::Float64, T::Int)
     # The third option ensures that only 3 Newton iterations are required. However, both are slower in total than the uncommented version, which still takes more than half of the total execution time of laguerreExp. Maybe a planned Clenshaw algorithm can improve this ...
 
 
-    jak = besselroots(alpha, itric)
+    jak = approx_besselroots(alpha, itric)
     bes = jak*0
     wbes = 0*bes
 
@@ -826,18 +826,18 @@ function laguerreExp( n::Int, compRepr::Bool, alpha::Float64, T::Int)
 
     if (T >= 3)
         # From here, the terms are also in [Tricomi 1947 pg. 296] and
-		bes = bes + (jak.^2 + 2*alpha^2 - 2)*d^2/3
-		wbes = wbes + (alpha^2 + jak.^2 -1)*2/3*d^2
+		bes = bes .+ (jak.^2 + 2*alpha^2 - 2)*d^2/3
+		wbes = wbes .+ (alpha^2 + jak.^2 -1)*2/3*d^2
 
 		air = air +  ak.^2*(d*16)^(1/3)/5 + (11/35-alpha^2-12/175*ak.^3)*d +  (16/1575*ak+92/7875*ak.^4)*2^(2/3)*d^(5/3)
 		bulk = bulk -d/12*(12*alpha^2 + 5*(1-t).^(-2) - 4*(1-t).^(-1) - 4)
 		wbulk = wbulk - d^2/6*(5*(1-t).^(-3) - 2*(1-t).^(-2) )
     end
-    bes = jak.^2*d.*(1 + bes )
-    air = 1/d +ak*(d/4)^(-1/3) + air
+    bes = jak.^2*d .* (1 .+ bes )
+    air = 1/d .+ ak*(d/4)^(-1/3) .+ air
     bulk = bulk + t/d
 
-    w = [ 4*d*bes.^alpha.*exp(-bes)./(besselj(alpha-1, jak)).^2 .*(1+ wbes); bulk.^alpha.*exp(-bulk)*2*pi.*sqrt(t./(1-t)).*(1 +wbulk) ; 2^(2*alpha+1/3)*n^(alpha+1/3)*exp.(-air)./(airyaiprime.(ak)).^2]
+    w = [ 4*d*bes.^alpha.*exp.(-bes)./(besselj.(alpha-1, jak)).^2 .* (1 .+ wbes); bulk.^alpha .* exp.(-bulk)*2pi.*sqrt.(t./(1 .- t)).*(1 .+ wbulk) ; 2^(2*alpha+1/3)*n^(alpha+1/3)*exp.(-air)./(airyaiprime.(ak)).^2]
     # For the Airy region, only O(n^{-4}) relative error for x and O(n^{-2/3}) for w as the latter are extremely small or even underflow
     x = [ bes; bulk ; air]
 

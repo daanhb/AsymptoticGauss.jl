@@ -9,7 +9,7 @@ function besselj_zero(nu, k)
     return fzero(bf,z)
 end
 
-function besselroots(nu::AbstractFloat, n::Int)
+function approx_besselroots(nu::AbstractFloat, n::Integer)
     [besselj_zero(nu, k) for k in 1:n]
 end
 
@@ -33,7 +33,7 @@ function asy_gaussjacobi!(x, w, α, β)
     k_right = n-k_left+1
 
     z = jac_z(n, α, β)
-    jb = besselroots(β, k_left)
+    jb = approx_besselroots(β, k_left)
     δ = zero(eltype(x))
     for k in 1:k_left
         x_left, w_left, δ_left = asy_jacobi_leftendpoint(n, k, α, β, jb[k], z)
@@ -46,7 +46,7 @@ function asy_gaussjacobi!(x, w, α, β)
             δ = max(δ, δ_bulk)
         end
     end
-    ja = besselroots(α, k_left)
+    ja = approx_besselroots(α, k_left)
     for k in k_right:n
         x_right, w_right, δ_right = asy_jacobi_rightendpoint(n, k, α, β, ja[n-k+1], z)
         x_bulk, w_bulk, δ_bulk = asy_jacobi_bulk(n, k, α, β, z)

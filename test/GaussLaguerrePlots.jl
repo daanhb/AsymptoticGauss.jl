@@ -1,8 +1,4 @@
 # Initialising
-using PyPlot
-using FastGaussQuadrature # For besselroots.jl
-
-include("gausslaguerreTest.jl")
 
 
 # Test for accuracy of the weights
@@ -11,7 +7,7 @@ alphat = 0.7
 (xd,wd) = gausslaguerreTest(nt,alphat,"rec")
 for hT = 1:4
 	(xex,wex) = gausslaguerreTest(nt, alphat, "exp", 1.0, 1, 2*hT)
-	semilogy(xex, abs(wd-wex)./wd, label="$hT terms")
+	semilogy(xex, abs.(wd-wex) ./ wd, label="$hT terms")
 end
 legend(loc="upper center")
 xlabel(L"$x_k$")
