@@ -62,7 +62,7 @@ function asy_gaussjacobi!(x, w, α, β)
         x[k], w[k], δ_bulk = asy_jacobi_bulk(n, k, α, β, z)
         δ = max(δ, δ_bulk)
     end
-    x, w, δ
+    x, w
 end
 
 two(T) = 2*one(T)
