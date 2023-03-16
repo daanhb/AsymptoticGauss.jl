@@ -7,6 +7,8 @@ using LinearAlgebra
 
 import FastGaussQuadrature: approx_besselroots
 
+include("common.jl")
+
 include("asy_laguerre.jl")
 
 include("gauss/gausslaguerre.jl")

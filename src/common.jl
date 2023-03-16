@@ -1,3 +1,8 @@
+
+# threshold for deciding on underflow
+underflow_threshold(x) = underflow_threshold(typeof(x))
+underflow_threshold(::Type{T}) where {T <: AbstractFloat} = 10floatmin(T)
+
 """
 `z, δ = sum_decreasing_terms(values)`
 
@@ -25,9 +30,13 @@ Compute the sum of the first `Q` elements in the `values` vector. The output
 the vector length.
 """
 function sum_fixed_terms(vals, Q)
-    @assert Q <= length(vals)
-    # for stability reasons we start from the end of the vector
-    z = sum(vals[k] for k in min(Q,length(vals)):-1:1)
-    δ = abs(vals[min(Q+1,length(vals))])
+    if Q > 0
+        # for stability reasons we start from the end of the vector
+        z = sum(vals[k] for k in min(Q,length(vals)):-1:1)
+        δ = abs(vals[min(Q+1,length(vals))])
+    else
+        z = zero(eltype(vals))
+        δ = zero(eltype(vals))
+    end
     z, δ
 end

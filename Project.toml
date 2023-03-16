@@ -15,9 +15,7 @@ Roots = "2.0"
 SpecialFunctions = "2.0"
 
 [extras]
-Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
-PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Printf", "PyPlot", "Test"]
+test = ["Test"]
