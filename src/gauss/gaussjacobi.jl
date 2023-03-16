@@ -183,8 +183,8 @@ gj_bulk_w7(t, z, α, β) = one(t)/120*((96α^6 + 96β^6 + 80*(8α^2 - 3)*β^4 - 
     - 6690α^2 - 128*(33α^6 - 33β^6 - 5*(α^2 - 27)*β^4 - 135α^4 +(5α^4 - 166)*β^2 + 166α^2)*t
     + 2595)*z^6/(t^6 - 3*t^4 + 3*t^2 - 1)
 
-function asy_jacobi_bulk(n, k, α, β, z = jac_z(n, α, β))
 
+function asy_jacobi_bulk(n, k, α, β, z = jac_z(n, α, β))
     t = cos(pi * (4n-4k+2α+3)/(4n+2α+2β+2))
 
     T = eltype(α)
@@ -213,7 +213,7 @@ function asy_jacobi_bulk(n, k, α, β, z = jac_z(n, α, β))
                 x += x7
                 w += w7
 
-                x9 =gj_bulk_x9(t, z, α, β)
+                x9 = gj_bulk_x9(t, z, α, β)
                 if abs(x9) > eps(T) && abs(x9) < abs(x7)
                     x += x9
                 end

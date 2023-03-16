@@ -20,7 +20,7 @@ asymptotic expansions for the nodes and weights.
 Optional parameters are:
 - `reduced`: compute a reduced quadrature rule, discarding all points and weights
 as soon as the weights underflow
-- `T`: the order of the expansion. Set `T=-1` to determine the order adaptively
+- `order`: the order of the expansion. Set `order=-1` to determine the order adaptively
 depending on the size of the terms in the expansion
 - `recompute`: if a crude measure of the error is larger than a tolerance,
 the points and weights are recomputed using the (slower) recursion+newton approach,
@@ -28,7 +28,7 @@ yielding more reliable accurate results.
 """
 function asy_gausslaguerre(n::Integer, α;
     reduced = false,
-    T = asy_gl_terms(n),
+    order = asy_gl_terms(n),
     recompute = false,
     verbose = false)
 
@@ -61,8 +61,8 @@ function asy_gausslaguerre(n::Integer, α;
         # than the one of the Bessel expansion
         jak = (k < k_bessel) ? jak_vector[k] : jak = FastGaussQuadrature.McMahon(α, k)
 
-        xk, wk, δ_bessel = asy_gausslaguerre_bessel(n, α, jak, d, T)
-        xkb, wkb, δ_bulk = asy_gausslaguerre_bulk(n, α, k, d, T)
+        xk, wk, δ_bessel = asy_gausslaguerre_bessel(n, α, jak, d, order)
+        xkb, wkb, δ_bulk = asy_gausslaguerre_bulk(n, α, k, d, order)
         if δ_bulk < δ_bessel
             bessel_wins = false
             xk = xkb
@@ -94,7 +94,7 @@ function asy_gausslaguerre(n::Integer, α;
     # - First we go from where we left of to our heuristic
     while k < k_airy-1
         k += 1
-        xk, wk, δ_bulk = asy_gausslaguerre_bulk(n, α, k, d, T)
+        xk, wk, δ_bulk = asy_gausslaguerre_bulk(n, α, k, d, order)
         if recompute
             if δ_bulk > 1e-13
                 xk_rec, wk_rec = gl_rec_newton(xk, n, α)
@@ -119,8 +119,8 @@ function asy_gausslaguerre(n::Integer, α;
     bulk_wins = true
     while bulk_wins && k < n
         k += 1
-        xk, wk, δ_bulk = asy_gausslaguerre_bulk(n, α, k, d, T)
-        xka, wka, δ_airy = asy_gausslaguerre_airy(n, α, k, d, T)
+        xk, wk, δ_bulk = asy_gausslaguerre_bulk(n, α, k, d, order)
+        xka, wka, δ_airy = asy_gausslaguerre_airy(n, α, k, d, order)
         if δ_airy < δ_bulk
             bulk_wins = false
             xk = xka
@@ -152,7 +152,7 @@ function asy_gausslaguerre(n::Integer, α;
     # The Airy region
     while k < n
         k += 1
-        xk, wk, δ_airy = asy_gausslaguerre_airy(n, α, k, d, T)
+        xk, wk, δ_airy = asy_gausslaguerre_airy(n, α, k, d, order)
         if recompute
             if δ_airy > 1e-13
                 xk_rec, wk_rec = gl_rec_newton(xk, n, α)
@@ -311,9 +311,9 @@ function gl_bulk_solve_t(n, k, d)
     t
 end
 
-function asy_gausslaguerre_bulk(n, α, k, d, T)
+function asy_gausslaguerre_bulk(n, α, k, d, order)
     if α == 0
-        return asy_gausslaguerre0_bulk(n, k, d, T)
+        return asy_gausslaguerre0_bulk(n, k, d, order)
     end
 
     t = gl_bulk_solve_t(n, k, d)
@@ -328,8 +328,8 @@ function asy_gausslaguerre_bulk(n, α, k, d, T)
     xs = (x3, x5, x7, x9)
     ws = (w3, w5, w7)
 
-    xk, xdelta = (T > 0) ? sum_fixed_terms(xs, (T-1)>>1) : sum_decreasing_terms(xs)
-    wk, wdelta = (T > 0) ? sum_fixed_terms(ws, (T-1)>>1) : sum_decreasing_terms(ws)
+    xk, xdelta = (order > 0) ? sum_fixed_terms(xs, (order-1)>>1) : sum_decreasing_terms(xs)
+    wk, wdelta = (order > 0) ? sum_fixed_terms(ws, (order-1)>>1) : sum_decreasing_terms(ws)
 
     xk += t/d
 
@@ -341,7 +341,7 @@ function asy_gausslaguerre_bulk(n, α, k, d, T)
 end
 
 
-function asy_gausslaguerre0_bulk(n, k, d, T)
+function asy_gausslaguerre0_bulk(n, k, d, order)
     t = gl_bulk_solve_t(n, k, d)
     x3 = gl_bulk_x3(t, d)
     x5 = gl_bulk_x5(t, d)
@@ -354,8 +354,8 @@ function asy_gausslaguerre0_bulk(n, k, d, T)
     xs = (x3, x5, x7, x9)
     ws = (w3, w5, w7)
 
-    xk, xdelta = (T > 0) ? sum_fixed_terms(xs, (T-1)>>1) : sum_decreasing_terms(xs)
-    wk, wdelta = (T > 0) ? sum_fixed_terms(ws, (T-1)>>1) : sum_decreasing_terms(ws)
+    xk, xdelta = (order > 0) ? sum_fixed_terms(xs, (order-1)>>1) : sum_decreasing_terms(xs)
+    wk, wdelta = (order > 0) ? sum_fixed_terms(ws, (order-1)>>1) : sum_decreasing_terms(ws)
 
     xk += t/d
 
@@ -367,9 +367,9 @@ function asy_gausslaguerre0_bulk(n, k, d, T)
 end
 
 
-function asy_gausslaguerre_bessel(n, α, jak, d, T)
+function asy_gausslaguerre_bessel(n, α, jak, d, order)
     if α == 0
-        return asy_gausslaguerre0_bessel(n, jak, d, T)
+        return asy_gausslaguerre0_bessel(n, jak, d, order)
     end
     x3 = gl_bessel_x3(jak, d, α)
     x5 = gl_bessel_x5(jak, d, α)
@@ -383,8 +383,8 @@ function asy_gausslaguerre_bessel(n, α, jak, d, T)
     xs = (x3, x5, x7, x9)
     ws = (w3, w5, w7, w9)
 
-    xk, xdelta = (T > 0) ? sum_fixed_terms(xs, (T-1)>>1) : sum_decreasing_terms(xs)
-    wk, wdelta = (T > 0) ? sum_fixed_terms(ws, (T-1)>>1) : sum_decreasing_terms(ws)
+    xk, xdelta = (order > 0) ? sum_fixed_terms(xs, (order-1)>>1) : sum_decreasing_terms(xs)
+    wk, wdelta = (order > 0) ? sum_fixed_terms(ws, (order-1)>>1) : sum_decreasing_terms(ws)
 
     xfactor = jak^2 * d
     xk = xfactor * (1 + xk)
@@ -399,7 +399,7 @@ function asy_gausslaguerre_bessel(n, α, jak, d, T)
     xk, wk, max(xdelta,wdelta)
 end
 
-function asy_gausslaguerre0_bessel(n, jak, d, T)
+function asy_gausslaguerre0_bessel(n, jak, d, order)
     x3 = gl_bessel_x3(jak, d)
     x5 = gl_bessel_x5(jak, d)
     x7 = gl_bessel_x7(jak, d)
@@ -414,8 +414,8 @@ function asy_gausslaguerre0_bessel(n, jak, d, T)
     xs = (x3, x5, x7, x9, x11)
     ws = (w3, w5, w7, w9, w11)
 
-    xk, xdelta = (T > 0) ? sum_fixed_terms(xs, (T-1)>>1) : sum_decreasing_terms(xs)
-    wk, wdelta = (T > 0) ? sum_fixed_terms(ws, (T-1)>>1) : sum_decreasing_terms(ws)
+    xk, xdelta = (order > 0) ? sum_fixed_terms(xs, (order-1)>>1) : sum_decreasing_terms(xs)
+    wk, wdelta = (order > 0) ? sum_fixed_terms(ws, (order-1)>>1) : sum_decreasing_terms(ws)
 
     xfactor = jak^2 * d
     xk = xfactor * (1 + xk)
@@ -439,9 +439,9 @@ function compute_airy_root(n, k)
     ak
 end
 
-function asy_gausslaguerre_airy(n, α, k, d, T)
+function asy_gausslaguerre_airy(n, α, k, d, order)
     if α == 0
-        return asy_gausslaguerre0_airy(n, k, d, T)
+        return asy_gausslaguerre0_airy(n, k, d, order)
     end
 
     ak = compute_airy_root(n, k)
@@ -451,7 +451,7 @@ function asy_gausslaguerre_airy(n, α, k, d, T)
 
     xs = (x1, x3, x5)
 
-    xk, xdelta = (T > 0) ? sum_fixed_terms(xs, (T+1)>>1) : sum_decreasing_terms(xs)
+    xk, xdelta = (order > 0) ? sum_fixed_terms(xs, (order+1)>>1) : sum_decreasing_terms(xs)
 
     wk = 4^(1/3)*xk^(α+1/3)*exp(-xk)/(airyaiprime(ak))^2
     wdelta = abs(wk)
@@ -459,7 +459,7 @@ function asy_gausslaguerre_airy(n, α, k, d, T)
     xk, wk, max(xdelta,wdelta)
 end
 
-function asy_gausslaguerre0_airy(n, k, d, T)
+function asy_gausslaguerre0_airy(n, k, d, order)
     ak = compute_airy_root(n, k)
 
     x1 = gl_airy_x1(ak, d)
@@ -468,7 +468,7 @@ function asy_gausslaguerre0_airy(n, k, d, T)
 
     xs = (x1, x3, x5)
 
-    xk, xdelta = (T > 0) ? sum_fixed_terms(xs, (T+1)>>1) : sum_decreasing_terms(xs)
+    xk, xdelta = (order > 0) ? sum_fixed_terms(xs, (order+1)>>1) : sum_decreasing_terms(xs)
 
     wk = 4^(1/3) * xk^(1/3) * exp(-xk) / (airyaiprime(ak))^2
     wdelta = abs(wk)
@@ -486,8 +486,8 @@ the Jacobi matrix.
 function gausslaguerre_GW(n, α)
     αvec = 2*(1:n) .+ (α-1)     # 3-term recurrence coeffs a and b
     βvec = sqrt.( (1:n-1).*(α .+ (1:n-1)) )
-    T = SymTridiagonal(Vector(αvec), βvec)  # Jacobi matrix
-    x, V = eigen(T)                 # eigenvalue decomposition
+    J = SymTridiagonal(Vector(αvec), βvec)  # Jacobi matrix
+    x, V = eigen(J)                 # eigenvalue decomposition
     w = gamma(α+1)*V[1,:].^2    # Quadrature weights
     x, vec(w)
 end
